@@ -50,8 +50,13 @@ foreach ($connection in $connections) {
 
 # Export the data to a CSV file
 $currentTD = Get-Date -Format "yyyyMMdd_HHmmss"
-$csvFilePath = [Environment]::GetFolderPath('Desktop')
-$csvFileName = "$csvFilePath\nsConnections_$currentTD.csv"
+$desktopFilePath = [Environment]::GetFolderPath('Desktop')
+$csvFolderExists = Test-Path -Path "$desktopFilePath\nsConnections"
+if (-not $csvFolderExists) {
+    New-Item -Path "$desktopFilePath" -Name "nsConnections" -ItemType 'directory'
+}
+$csvFilePath = "$desktopFilePath\nsConnections"
+$csvFileName = "$csvFilePath\$currentTD.csv"
 #$csvFilePath = "Your\File\Path\Here.csv"
 $connectionsWithProcesses | Export-Csv -Path $csvFileName -NoTypeInformation
 
