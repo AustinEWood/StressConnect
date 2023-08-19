@@ -49,7 +49,11 @@ foreach ($connection in $connections) {
 }
 
 # Export the data to a CSV file
-$csvFilePath = "Your\File\Path\Here.csv"
-$connectionsWithProcesses | Export-Csv -Path $csvFilePath -NoTypeInformation
+$currentTD = Get-Date -Format "yyyyMMdd_HHmmss"
+$csvFilePath = [Environment]::GetFolderPath('Desktop')
+$csvFileName = "$csvFilePath\nsConnections_$currentTD.csv"
+#$csvFilePath = "Your\File\Path\Here.csv"
+$connectionsWithProcesses | Export-Csv -Path $csvFileName -NoTypeInformation
 
-Write-Host "Data exported to $csvFilePath"
+Write-Host "Data exported to $csvFileName"
+ 
