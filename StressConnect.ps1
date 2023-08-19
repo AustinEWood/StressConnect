@@ -49,7 +49,7 @@ foreach ($connection in $connections) {
 }
 
 # Export the data to a CSV file
-$csvFilePath = "Your\File\Path\Here"
+$csvFilePath = "Your\File\Path\Here.csv"
 $connectionsWithProcesses | Export-Csv -Path $csvFilePath -NoTypeInformation
 
 Write-Host "Data exported to $csvFilePath"
