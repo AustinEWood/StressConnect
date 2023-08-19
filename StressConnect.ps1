@@ -35,7 +35,7 @@ foreach ($connection in $connections) {
     
     # Set up headers with your API key
     $headers = @{
-        "x-apikey" = "8e52cac007ddd074c33334f14a4a0f2100668bc2418640ccf57685f080064abc"
+        "x-apikey" = "Your API Key Here"
     }
 
     # Send the VirusTotal API request
@@ -49,7 +49,7 @@ foreach ($connection in $connections) {
 }
 
 # Export the data to a CSV file
-$csvFilePath = "C:\Users\Austi\Documents\IPs\ConnectionTest.csv"
+$csvFilePath = "Your\File\Path\Here"
 $connectionsWithProcesses | Export-Csv -Path $csvFilePath -NoTypeInformation
 
 Write-Host "Data exported to $csvFilePath"
