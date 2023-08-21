@@ -57,7 +57,7 @@ if (-not $csvFolderExists) {
 }
 $csvFilePath = "$desktopFilePath\nsConnections"
 $csvFileName = "$csvFilePath\$currentTD.csv"
-#$csvFilePath = "Your\File\Path\Here.csv"
+
 $connectionsWithProcesses | Export-Csv -Path $csvFileName -NoTypeInformation
 
 Write-Host "Data exported to $csvFileName"
