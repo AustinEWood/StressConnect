@@ -1,64 +1,113 @@
-# Filtering for established connections removing loopbacks & IP6 addresses
-$netstatOutput = netstat -ano | findstr ESTABLISHED | findstr -v 127. | findstr -v [
+param (
+    [string]$apiKey
+)
+
+# Initialize logging with dynamic path
+$Logfile = Join-Path (Get-Location) 'error_log.txt'
+
+# Function for writing to log file
+function LogWrite{
+   Param ([string]$logstring)
+   Add-content $Logfile -value $logstring
+}
+ 
+# Filtering for established connections, removing loopbacks & IP6 addresses
+$netstatOutput = netstat -ano | findstr ESTABLISHED | findstr -v 127.0.0.1 | findstr -v ::
+
+
+
+# Initialize an array to store connection objects
+$connections = @()
 
 # Parse the netstat output to extract connection information
-$connections = $netstatOutput | ForEach-Object {
-    $parts = $_ -split '\s+'
-    $addressParts = $parts[2, 3] -split ':'
-    $remoteAddress = $addressParts[2]
-    $remotePort = $addressParts[3]
+$netstatOutput | ForEach-Object {
+    try {
+        $parts = $_ -split '\s+'
+        $remoteAddressParts = $parts[3] -split ':'
+        $localAddressParts = $parts[2] -split ':'
 
-    $addressParts = $parts[2] -split ':'
-    $localAddress = $addressParts[0]
-    $localPort = $addressParts[1]
-    
-    [PSCustomObject]@{
-        Protocol = $parts[1]
-        LocalAddress = $localAddress
-        LocalPort = $localPort
-        RemoteAddress = $remoteAddress
-        RemotePort = $remotePort
-        State = $parts[4]
-        PID = $parts[5]
+        # Check if the RemoteAddress is an IPv6 address and skip if true
+        if ($remoteAddressParts[0] -match '.*:.*:.*') {
+            continue
+        }
+
+        # Get the process name using PID
+        $processName = (Get-Process -Id $parts[5]).ProcessName
+
+        # Construct a PSCustomObject to represent the connection
+        $connection = [PSCustomObject]@{
+            Protocol = $parts[1]
+            LocalAddress = $localAddressParts[0]
+            LocalPort = $localAddressParts[1]
+            RemoteAddress = $remoteAddressParts[0]
+            RemotePort = $remoteAddressParts[1]
+            State = $parts[4]
+            PID = $parts[5]
+            ProcessName = $processName
+        }
+
+        # Add the connection object to the connections array
+        $connections += $connection
+    } catch {
+        LogWrite "An error occurred while parsing netstat output: $_"    
     }
 }
 
-# Initialize an array to store processed connection information
-$connectionsWithProcesses = @()
 
-# Loop through each connection to process VirusTotal data
-foreach ($connection in $connections) {
-    $process = Get-Process -Id $connection.PID -ErrorAction SilentlyContinue
+# Loop through each connection to process VirusTotal data (if API key is provided and valid)
+function Use-APIKey{
+    foreach ($connection in $connections) {
+        try {
+            if ($apiKey) {
+                $virusTotalApiUrl = "https://www.virustotal.com/api/v3/ip_addresses/" + $connection.RemoteAddress
 
-    # Construct the VirusTotal API URL for the current connection's remote address
-    $virusTotalApiUrl = "https://www.virustotal.com/api/v3/ip_addresses/$($connection.remoteAddress)"
+                $headers = @{
+                    "x-apiKey" = $apiKey
+                }
+
+                $virusTotalResponse = Invoke-RestMethod -Uri $virusTotalApiUrl -Headers $headers -ErrorAction SilentlyContinue
+
+                $connection | Add-Member -MemberType NoteProperty -Name MaliciousVerdicts -Value ($virusTotalResponse.data.attributes.last_analysis_stats.malicious)
+            }
+        }
+        catch {
+            LogWrite "An error occurred: $_" 
+        }
+    }    
+}
+
+# Testing to see APIKey has a value if so validate the key and run Use-APiKey.
+function Test-APIKey {  
     
-    # Set up headers with your API key
+    $virusTotalApiUrlTest = "https://www.virustotal.com/api/v3/ip_addresses/8.8.8.8" # Using URL feed as a test
+
     $headers = @{
-        "x-apikey" = "Your API Key Here"
+        "x-apiKey" = $apiKey
     }
 
-    # Send the VirusTotal API request
-    $virusTotalResponse = Invoke-RestMethod -Uri $virusTotalApiUrl -Headers $headers
-
-    $connection | Add-Member -MemberType NoteProperty -Name ProcessName -Value ($process.Name -join ', ')
-    $connection | Add-Member -MemberType NoteProperty -Name MaliciousVerdicts -Value ($virusTotalResponse.data.attributes.last_analysis_stats.malicious)
-    
-    # Add the processed connection information to the array
-    $connectionsWithProcesses += $connection
+    try {
+        if ($apiKey -eq ""){
+            LogWrite "No API Key supplied"
+        }
+        else {
+        $response = Invoke-RestMethod -Uri $virusTotalApiUrlTest -Headers $headers -Method 'GET' -ErrorAction Stop
+        LogWrite "It should have worked"
+        LogWrite $response
+        Use-APIKey
+        }
+    }    
+    catch {
+        LogWrite "An error occurred while testing the API key. It may be incorrect or there might be an issue with the endpoint."
+    }
 }
 
-# Export the data to a CSV file
-$currentTD = Get-Date -Format "yyyyMMdd_HHmmss"
-$desktopFilePath = [Environment]::GetFolderPath('Desktop')
-$csvFolderExists = Test-Path -Path "$desktopFilePath\nsConnections"
-if (-not $csvFolderExists) {
-    New-Item -Path "$desktopFilePath" -Name "nsConnections" -ItemType 'directory'
-}
-$csvFilePath = "$desktopFilePath\nsConnections"
-$csvFileName = "$csvFilePath\$currentTD.csv"
-#$csvFilePath = "Your\File\Path\Here.csv"
-$connectionsWithProcesses | Export-Csv -Path $csvFileName -NoTypeInformation
 
-Write-Host "Data exported to $csvFileName"
- 
+Test-APIKey
+
+
+
+
+# Convert the processed connections to JSON and write them to the standard output
+$connections | ConvertTo-Json -Compress -ErrorAction SilentlyContinue
+
+
