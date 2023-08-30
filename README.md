@@ -26,3 +26,17 @@ Script Information:
 
 Stress Connect: 
 This script will use netstate to pull all established connections to your device. It will filter out any IPv6 addresses as well as any loopback addresses. If you have supplied an API key it will test the connection's remote IP to VirusTotal to see if any are known malicious IPs.  Supplied in the information with be Protocol, Local Address and port, Remote address and port, State of the connection, PID of the process running, and the Process Name running attached to the connection. If the API key is present it will add "Malicious Verdicts" to the list of information and give it a number showing how many vendors have reported the IP. 
+
+![StressConnectOpen](https://github.com/AustinEWood/StressConnect/assets/53714369/6e136070-a900-403f-aa26-29c6178503bb)
+
+![StressConnectRun](https://github.com/AustinEWood/StressConnect/assets/53714369/edd9b374-ed88-4cff-991d-9771c98d8262)
+
+![StressConnectWithAPIKey](https://github.com/AustinEWood/StressConnect/assets/53714369/bc96ddc6-d552-471c-9ba6-dbd9a09867a9)
+
+![StressConnectSaveFile](https://github.com/AustinEWood/StressConnect/assets/53714369/53551f2b-e8ff-4ff1-a45f-fbf8aab53ad4)
+
+![StressConnectCSVFile](https://github.com/AustinEWood/StressConnect/assets/53714369/bbaf90d6-d334-4f47-8924-09901f7b25b0)
+
+
+
+
