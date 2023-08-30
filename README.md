@@ -1,9 +1,9 @@
 # StressConnect
+Test connections Established on your Windows device to see if they are Malicious.
 
 The Executable is in the Git file. You can right-click it and create a shortcut to your desktop if you would like.
 
-
-Test connections Established on your Windows device to see if they are Malicious.
+![StressConnectEXEFile](https://github.com/AustinEWood/StressConnect/assets/53714369/70dd89ef-42a4-4502-8427-79ec686e8c66)
 
 The GUI is now in place.
 
